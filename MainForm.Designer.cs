@@ -111,6 +111,7 @@ namespace GCode_splitter
 			// 
 			// bt_send
 			// 
+			this.bt_send.Enabled = false;
 			this.bt_send.Location = new System.Drawing.Point(571, 423);
 			this.bt_send.Name = "bt_send";
 			this.bt_send.Size = new System.Drawing.Size(111, 39);
@@ -143,12 +144,14 @@ namespace GCode_splitter
 			// 
 			// bt_split
 			// 
+			this.bt_split.Enabled = false;
 			this.bt_split.Location = new System.Drawing.Point(571, 365);
 			this.bt_split.Name = "bt_split";
 			this.bt_split.Size = new System.Drawing.Size(111, 39);
 			this.bt_split.TabIndex = 8;
 			this.bt_split.Text = "Split";
 			this.bt_split.UseVisualStyleBackColor = true;
+			this.bt_split.Click += new System.EventHandler(this.Bt_splitClick);
 			// 
 			// groupBox1
 			// 
