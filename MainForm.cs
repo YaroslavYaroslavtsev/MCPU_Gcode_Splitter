@@ -9,11 +9,17 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 using System.Net;
 using FtpLib;
 using System.IO;
 using System.Text;
+
+
+using GCode_splitter.Core;
+
+
 
 namespace GCode_splitter
 {
@@ -27,15 +33,89 @@ namespace GCode_splitter
 			//
 			// The InitializeComponent() call is required for Windows Forms designer support.
 			//
+			
 			InitializeComponent();
-			ftp = new FtpConnection(ip.Text, ftp_login.Text, ftp_pass.Text);
+
+			
+			_core.stateChange += updateState;
+			
+			//debug
+			_file = "G:\\finial_cds-Ultimaker-2-and-2-PLA-normal.gcode";
+			filename.Text = "G:\\finial_cds-Ultimaker-2-and-2-PLA-normal.gcode";
+			
+
 		}
-	
-		FtpLib.FtpConnection ftp;
-		string _file = "";
-		string _mcpupath = "4:/$MMTPRJ$/gcode/prog/";
-		string _selectedFile = "";
+        
+		Controller _core = Controller.getEntity();
 		
+		// selected source file
+		string _file = "";
+		
+		void updateState(string subsystem, string item, object state)
+		{
+			// common handler
+			if (item == "log") {
+				logWindow.append("[" + subsystem + "]" + state.ToString());
+				Application.DoEvents();
+			}
+			if (item == "progress") {		
+				int _state;
+				if (int.TryParse(state.ToString(), out _state)) {
+					progress.Visible = _state > 0 && _state < 100;
+					progress.Value = _state;
+				}
+				Application.DoEvents();
+														
+			}
+			
+			switch (subsystem) {
+				case "SPLITTER":
+					switch (item) {
+						case "fileset":
+							var files = state as List<string[]>;
+							if (files != null) {
+							    l_fileset.Items.Clear();
+							    for (int i = 0; i < files.Count; i++) {
+									l_fileset.Items.Add(String.Format("{0:000}", i + 1));
+									l_fileset.Tag = files;
+								}
+								l_fileset.SelectedIndex = 0;
+							}
+							break;
+					}
+					break;
+				case "SENDER":
+					switch (item) {
+						case "state":
+							int _state;
+							if (int.TryParse(state.ToString(), out _state)) {
+								icon.Image = _state > 0 ?
+								this.icon.Image = ((System.Drawing.Image)(resources.GetObject("icon.run"))) :
+								this.icon.Image = ((System.Drawing.Image)(resources.GetObject("icon.stop")));
+							}
+							break;
+						case "mode":
+							mode.Text = state.ToString();
+							break;
+			            case "plcerrcode":
+							plcError.Text = state.ToString();
+							
+						break;
+						case "file":
+                        int _file;
+                            if (int.TryParse(state.ToString(), out _file)) {
+                            l_fileset.SelectedIndex = _file - 1;
+                            }    
+                            
+                        break;
+					}
+					break;
+				default:
+					break;
+			}
+		
+		}
+			
 		void ButtonSelect(object sender, EventArgs e)
 		{
 			using (OpenFileDialog ofd = new OpenFileDialog()) {
@@ -43,93 +123,137 @@ namespace GCode_splitter
 				if (DialogResult.OK == ofd.ShowDialog()) {
 					_file = ofd.FileNames[0];
 					filename.Text = _file;
-					bt_split.Enabled = true;
+
+
+					logWindow.append(Messages.FILE_SELECTED, _file);
 				}
 			}
 		}
-		
-		void deleteFiles()
+	
+		void Bt_runClick(object sender, EventArgs e)
 		{
-			ftp.Open();
-			ftp.Login();
-			ftp.SendCommand("cpuchg no2");
-			// remove 4 files O001.gcd to O004.gcd
-			for(int i = 1; i < 5; i++){
-				try
-				{
-					ftp.RemoveFile(_mcpupath + "O" + i.ToString("000") + ".gcd");
-				}
-				catch(Exception err)
-				{
-					MessageBox.Show(err.Message);
-				}
+			if (_core.getState("SENDER", "state").ToString() == "run") {
+				Dialogs.warning(Errors.FILE_SENDING_ALREADY_RAN);
+				return;
 			}
-			ftp.Close();
-			//MessageBox.Show("Send file - OK");
+			if (l_fileset.SelectedItems.Count == 0) {
+				Dialogs.warning(Errors.FILE_SET_NOT_SELECTED);
+				return;
+			}
+			try {
+				if (Dialogs.confirmation(Messages.LAUNCH_FILE_SENDING)) {
+					_core.command("SENDER:run", l_fileset.SelectedIndex + 1, l_fileset.Items.Count );
+
+				}
+			} catch (Exception ex) {
+				Dialogs.error(ex.Message);
+			}
 		}
 		
-		void writeFiles(string fileName)
+
+	
+		void Bt_stopClick(object sender, EventArgs e)
 		{
-			ftp.Open();
-			ftp.Login();
-			ftp.SendCommand("cpuchg no2");
-			// write 4 files O001.gcd to O004.gcd
-			for(int i = 1; i < 5; i++){
-				try
-				{
-					ftp.PutFile(fileName + i.ToString() , _mcpupath + "O" + i.ToString("000") + ".gcd");
-				}
-				catch(Exception err){
-					MessageBox.Show(err.Message);
-				}
+			if (_core.getState("SENDER", "state").ToString() != "run") {
+				Dialogs.warning(Errors.FILE_SENDING_ALREADY_STOPED);
+				return;
 			}
-			ftp.Close();
-		}
-		
-		string[] readSourceFile(string fileName)
-		{
-			var list = new List<string>();
-			var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-			using (var streamReader = new StreamReader(fileStream, Encoding.UTF8))
-			{
-    			string line;
-    			while ((line = streamReader.ReadLine()) != null)
-    			{
-			        list.Add(line);
-    			}
-			}
-			return list.ToArray();
-		}
-		
-		void writeDestFile(string fileName, string[] lines)
-		{
-			var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Write);
-			using (var streamWriter = new StreamWriter(fileStream, Encoding.UTF8))
-			{
-				foreach(string line in lines)
-				{
-					streamWriter.WriteLine(line);
+			
+			try {
+				if (Dialogs.confirmation(Messages.STOP_FILE_SENDING)) {
+					_core.command("SENDER:stop");
+
 				}
+			} catch (Exception ex) {
+				Dialogs.error(ex.Message);
 			}
 		}
 		
-		
-		/// <summary>
-		/// Split file to several .gcd files
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
 		void Bt_splitClick(object sender, EventArgs e)
 		{
-			string[] lines =  readSourceFile(_file);
-			if (!Directory.Exists(".\\Output")) Directory.CreateDirectory(".\\Output");
-			
-			for (int i = 1; i < 5; i++) {
-				
+			if (_file == "") {
+				Dialogs.warning(Errors.FILE_NOT_SELECTED);
+				return;
 			}
 			
-			bt_send.Enabled = true;
+			try {
+				if (Dialogs.confirmation(Messages.SPLIT_SELECTED_FILE, _file)) {
+					_core.command("SPLITTER:split", _file);
+				}
+			} catch (Exception ex) {
+				Dialogs.error(ex.Message);
+			}
 		}
 		
+		void Bt_sendClick(object sender, EventArgs e)
+		{
+			if (_core.getState("SENDER", "state").ToString() == "run") {
+				Dialogs.warning(Errors.SEND_NOT_AVAILABLE);
+				return;
+			}
+			if (l_fileset.SelectedItems.Count == 0) {
+				Dialogs.warning(Errors.FILE_SET_NOT_SELECTED);
+				return;
+			}
+			try {
+				if (Dialogs.confirmation(Messages.SEND_FILE_SET, l_fileset.SelectedItems[0])) {
+		            List<string[]> selectedSet = l_fileset.Tag as List<string[]>;
+		            _core.command("SENDER:send", l_fileset.SelectedIndex + 1, selectedSet[l_fileset.SelectedIndex].Length);
+				}
+			} catch (Exception ex) {
+				Dialogs.error(ex.Message);
+			}
+		}
+
+		void L_filesetSelectedIndexChanged(object sender, EventArgs e)
+		{
+			var files = l_fileset.Tag as List<string[]>;
+			if (files != null) {
+				l_files.Items.Clear();
+				l_files.Items.AddRange(files[l_fileset.SelectedIndex]);
+			}
+		}
+        void ToolStripSplitButton1ButtonClick(object sender, EventArgs e)
+        {
+          
+        }
+        void STOPMCPUToolStripMenuItemClick(object sender, EventArgs e)
+        {
+          if (_core.getState("SENDER", "state").ToString() == "run") {
+                Dialogs.warning(Errors.OPERATION_NOT_AVAILABLE);
+                return;
+            }
+            try {
+                if (Dialogs.confirmation(Messages.CONFIRM_OPERATION, "STOP MCPU")) {
+                    _core.command("SENDER:stopplc");
+                }
+            } catch (Exception ex) {
+                Dialogs.error(ex.Message);
+            }
+        }
+        void RUNMCPUToolStripMenuItemClick(object sender, EventArgs e)
+        {
+          if (_core.getState("SENDER", "state").ToString() == "run") {
+                Dialogs.warning(Errors.OPERATION_NOT_AVAILABLE);
+                return;
+            }
+            try {
+                if (Dialogs.confirmation(Messages.CONFIRM_OPERATION, "RUN MCPU")) {
+                    _core.command("SENDER:runplc");
+                }
+            } catch (Exception ex) {
+                Dialogs.error(ex.Message);
+            }
+        }
+        void _statusItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+          
+        }
+        void _timerTick(object sender, EventArgs e)
+        {
+             _core.command("SENDER:check");
+        }
+       
+
 	}
 }

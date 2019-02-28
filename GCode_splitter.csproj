@@ -10,6 +10,7 @@
     <AssemblyName>GCode_splitter</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <AppDesignerFolder>Properties</AppDesignerFolder>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -31,9 +32,13 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="log4net">
+      <HintPath>packages\log4net.2.0.8\lib\net40-full\log4net.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
+    <Reference Include="MITSUBISHI.Component.DotUtlType" />
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -50,6 +55,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Config.cs" />
+    <Compile Include="Core\Controller.cs" />
+    <Compile Include="Core\GCodePrg.cs" />
+    <Compile Include="Core\MxComp.cs" />
+    <Compile Include="Core\Sender.cs" />
+    <Compile Include="Core\Splitter.cs" />
+    <Compile Include="Core\StateMachine.cs" />
+    <Compile Include="Core\SubSystem.cs" />
     <Compile Include="FtpLib\Extensions.cs" />
     <Compile Include="FtpLib\FtpConnection.cs" />
     <Compile Include="FtpLib\FtpDirectoryInfo.cs" />
@@ -61,14 +74,32 @@
     <Compile Include="MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Dialogs.cs" />
+    <Compile Include="Messages.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UserControls\ScrolledTextBox.cs" />
+    <Compile Include="UserControls\ScrolledTextBox.Designer.cs">
+      <DependentUpon>ScrolledTextBox.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="FtpLib" />
+    <Folder Include="Core" />
+    <Folder Include="Common" />
+    <Folder Include="UserControls" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UserControls\ScrolledTextBox.resx">
+      <DependentUpon>ScrolledTextBox.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
