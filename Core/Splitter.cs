@@ -23,8 +23,8 @@ namespace GCode_splitter.Core
             : base(name)
         {
             _cfg = Config.getEntity();
-            _outputFolder = _cfg.read("cmnOutputDir");
-            _chunkSize = int.Parse(_cfg.read("cmnProgSize"));
+            _outputFolder = _cfg.read("cmnOutputDir", "./Output");
+            int.TryParse(_cfg.read("cmnProgSize", "100000"), out _chunkSize);
             _log = LogManager.GetLogger(name);
         }
 		
@@ -141,7 +141,7 @@ namespace GCode_splitter.Core
         {
             string content;
             var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-            using (var streamReader = new StreamReader(fileStream, Encoding.UTF8)) {
+            using (var streamReader = new StreamReader(fileStream, Encoding.ASCII)) {
                 content = streamReader.ReadToEnd();
             }
             return content;
@@ -150,7 +150,7 @@ namespace GCode_splitter.Core
         void writeDestFile(string fileName, string body)
         {
             var fileStream = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Write);
-            using (var streamWriter = new StreamWriter(fileStream, Encoding.UTF8)) {
+            using (var streamWriter = new StreamWriter(fileStream, Encoding.ASCII)) {
                 streamWriter.WriteLine(body);
             }
         }

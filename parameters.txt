@@ -1,0 +1,14 @@
+  <?xml version="1.0" encoding="utf-8" ?> 
+- <profile>
+- <section name="Splitter">
+  <entry name="version">1.0</entry> 
+  <entry name="cmnProgSize">300000</entry> 
+  <entry name="ftpIP">192.168.1.16</entry> 
+  <entry name="ftpUser">RJ71EN71</entry> 
+  <entry name="ftpPass">RJ71EN71</entry> 
+  <entry name="plcFtpPath">4:/$MMTPRJ$/gcode/prog/</entry> 
+  <entry name="plcFtpCpu2">1</entry> 
+  <entry name="lastFileName">G:\Project\3D Printer\Test example\testPrg.gcd</entry> 
+  <entry name="cmnOutputDir">./Output</entry> 
+  </section>
+  </profile>

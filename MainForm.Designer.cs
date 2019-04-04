@@ -34,10 +34,15 @@ namespace GCode_splitter
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.ListBox l_files;
-		private System.Windows.Forms.ToolStripSplitButton subMenuButton;
-		private System.Windows.Forms.ToolStripMenuItem sTOPMCPUToolStripMenuItem;
-		private System.Windows.Forms.ToolStripMenuItem rUNMCPUToolStripMenuItem;
 		private System.Windows.Forms.ToolStripStatusLabel plcError;
+		private System.Windows.Forms.Button btn_runplc;
+		private System.Windows.Forms.Button btn_stopplc;
+		private System.Windows.Forms.GroupBox groupBox2;
+		private System.Windows.Forms.GroupBox groupBox4;
+		private System.Windows.Forms.ImageList images;
+		private System.Windows.Forms.GroupBox groupBox5;
+		private System.Windows.Forms.Button btn_runcnc;
+		private System.Windows.Forms.Button btn_stopcnc;
 		
 		/// <summary>
 		/// Disposes resources used by the form.
@@ -79,14 +84,22 @@ namespace GCode_splitter
 		    this._status = new System.Windows.Forms.StatusStrip();
 		    this.icon = new System.Windows.Forms.ToolStripStatusLabel();
 		    this.mode = new System.Windows.Forms.ToolStripStatusLabel();
-		    this.subMenuButton = new System.Windows.Forms.ToolStripSplitButton();
-		    this.sTOPMCPUToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-		    this.rUNMCPUToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 		    this.plcError = new System.Windows.Forms.ToolStripStatusLabel();
 		    this.progress = new System.Windows.Forms.ToolStripProgressBar();
+		    this.btn_runplc = new System.Windows.Forms.Button();
+		    this.btn_stopplc = new System.Windows.Forms.Button();
+		    this.groupBox2 = new System.Windows.Forms.GroupBox();
+		    this.groupBox4 = new System.Windows.Forms.GroupBox();
+		    this.images = new System.Windows.Forms.ImageList(this.components);
+		    this.groupBox5 = new System.Windows.Forms.GroupBox();
+		    this.btn_runcnc = new System.Windows.Forms.Button();
+		    this.btn_stopcnc = new System.Windows.Forms.Button();
 		    this.groupBox1.SuspendLayout();
 		    this.groupBox3.SuspendLayout();
 		    this._status.SuspendLayout();
+		    this.groupBox2.SuspendLayout();
+		    this.groupBox4.SuspendLayout();
+		    this.groupBox5.SuspendLayout();
 		    this.SuspendLayout();
 		    // 
 		    // filename
@@ -108,21 +121,21 @@ namespace GCode_splitter
 		    // 
 		    // bt_send
 		    // 
-		    this.bt_send.Location = new System.Drawing.Point(560, 196);
+		    this.bt_send.Location = new System.Drawing.Point(560, 142);
 		    this.bt_send.Name = "bt_send";
 		    this.bt_send.Size = new System.Drawing.Size(111, 39);
 		    this.bt_send.TabIndex = 4;
-		    this.bt_send.Text = "Send";
+		    this.bt_send.Text = "Send one";
 		    this.bt_send.UseVisualStyleBackColor = true;
 		    this.bt_send.Click += new System.EventHandler(this.Bt_sendClick);
 		    // 
 		    // bt_split
 		    // 
-		    this.bt_split.Location = new System.Drawing.Point(560, 138);
+		    this.bt_split.Location = new System.Drawing.Point(560, 97);
 		    this.bt_split.Name = "bt_split";
 		    this.bt_split.Size = new System.Drawing.Size(111, 39);
 		    this.bt_split.TabIndex = 8;
-		    this.bt_split.Text = "Split";
+		    this.bt_split.Text = "Split file";
 		    this.bt_split.UseVisualStyleBackColor = true;
 		    this.bt_split.Click += new System.EventHandler(this.Bt_splitClick);
 		    // 
@@ -167,6 +180,7 @@ namespace GCode_splitter
 		    this.l_fileset.Name = "l_fileset";
 		    this.l_fileset.Size = new System.Drawing.Size(231, 303);
 		    this.l_fileset.TabIndex = 16;
+		    this.l_fileset.SelectedIndexChanged += new System.EventHandler(this.L_filesetSelectedIndexChanged);
 		    // 
 		    // label2
 		    // 
@@ -204,7 +218,7 @@ namespace GCode_splitter
 		    // 
 		    // bt_run
 		    // 
-		    this.bt_run.Location = new System.Drawing.Point(560, 255);
+		    this.bt_run.Location = new System.Drawing.Point(32, 19);
 		    this.bt_run.Name = "bt_run";
 		    this.bt_run.Size = new System.Drawing.Size(111, 39);
 		    this.bt_run.TabIndex = 14;
@@ -214,7 +228,7 @@ namespace GCode_splitter
 		    // 
 		    // bt_stop
 		    // 
-		    this.bt_stop.Location = new System.Drawing.Point(560, 313);
+		    this.bt_stop.Location = new System.Drawing.Point(32, 64);
 		    this.bt_stop.Name = "bt_stop";
 		    this.bt_stop.Size = new System.Drawing.Size(111, 39);
 		    this.bt_stop.TabIndex = 13;
@@ -227,7 +241,6 @@ namespace GCode_splitter
 		    this._status.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.icon,
             this.mode,
-            this.subMenuButton,
             this.plcError,
             this.progress});
 		    this._status.Location = new System.Drawing.Point(0, 627);
@@ -236,7 +249,6 @@ namespace GCode_splitter
 		    this._status.Size = new System.Drawing.Size(710, 22);
 		    this._status.TabIndex = 15;
 		    this._status.Text = "statusStrip1";
-		    this._status.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this._statusItemClicked);
 		    // 
 		    // icon
 		    // 
@@ -255,33 +267,6 @@ namespace GCode_splitter
 		    this.mode.Size = new System.Drawing.Size(100, 17);
 		    this.mode.Text = "STOP";
 		    // 
-		    // subMenuButton
-		    // 
-		    this.subMenuButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-		    this.subMenuButton.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.sTOPMCPUToolStripMenuItem,
-            this.rUNMCPUToolStripMenuItem});
-		    this.subMenuButton.Image = ((System.Drawing.Image)(resources.GetObject("subMenuButton.Image")));
-		    this.subMenuButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-		    this.subMenuButton.Name = "subMenuButton";
-		    this.subMenuButton.Size = new System.Drawing.Size(32, 20);
-		    this.subMenuButton.Text = "toolStripSplitButton1";
-		    this.subMenuButton.ButtonClick += new System.EventHandler(this.ToolStripSplitButton1ButtonClick);
-		    // 
-		    // sTOPMCPUToolStripMenuItem
-		    // 
-		    this.sTOPMCPUToolStripMenuItem.Name = "sTOPMCPUToolStripMenuItem";
-		    this.sTOPMCPUToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
-		    this.sTOPMCPUToolStripMenuItem.Text = "STOP MCPU";
-		    this.sTOPMCPUToolStripMenuItem.Click += new System.EventHandler(this.STOPMCPUToolStripMenuItemClick);
-		    // 
-		    // rUNMCPUToolStripMenuItem
-		    // 
-		    this.rUNMCPUToolStripMenuItem.Name = "rUNMCPUToolStripMenuItem";
-		    this.rUNMCPUToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
-		    this.rUNMCPUToolStripMenuItem.Text = "RUN MCPU";
-		    this.rUNMCPUToolStripMenuItem.Click += new System.EventHandler(this.RUNMCPUToolStripMenuItemClick);
-		    // 
 		    // plcError
 		    // 
 		    this.plcError.AutoSize = false;
@@ -296,14 +281,99 @@ namespace GCode_splitter
 		    this.progress.Size = new System.Drawing.Size(100, 16);
 		    this.progress.Visible = false;
 		    // 
+		    // btn_runplc
+		    // 
+		    this.btn_runplc.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(0)))));
+		    this.btn_runplc.Location = new System.Drawing.Point(31, 19);
+		    this.btn_runplc.Name = "btn_runplc";
+		    this.btn_runplc.Size = new System.Drawing.Size(49, 48);
+		    this.btn_runplc.TabIndex = 16;
+		    this.btn_runplc.Text = "RUN MCPU";
+		    this.btn_runplc.UseVisualStyleBackColor = false;
+		    this.btn_runplc.Click += new System.EventHandler(this.Btn_runClick);
+		    // 
+		    // btn_stopplc
+		    // 
+		    this.btn_stopplc.BackColor = System.Drawing.Color.Red;
+		    this.btn_stopplc.Location = new System.Drawing.Point(93, 19);
+		    this.btn_stopplc.Name = "btn_stopplc";
+		    this.btn_stopplc.Size = new System.Drawing.Size(49, 48);
+		    this.btn_stopplc.TabIndex = 17;
+		    this.btn_stopplc.Text = "STOP MCPU";
+		    this.btn_stopplc.UseVisualStyleBackColor = false;
+		    this.btn_stopplc.Click += new System.EventHandler(this.Btn_stopClick);
+		    // 
+		    // groupBox2
+		    // 
+		    this.groupBox2.Controls.Add(this.bt_run);
+		    this.groupBox2.Controls.Add(this.bt_stop);
+		    this.groupBox2.Location = new System.Drawing.Point(528, 187);
+		    this.groupBox2.Name = "groupBox2";
+		    this.groupBox2.Size = new System.Drawing.Size(170, 113);
+		    this.groupBox2.TabIndex = 18;
+		    this.groupBox2.TabStop = false;
+		    this.groupBox2.Text = "Automatic send";
+		    // 
+		    // groupBox4
+		    // 
+		    this.groupBox4.Controls.Add(this.btn_runplc);
+		    this.groupBox4.Controls.Add(this.btn_stopplc);
+		    this.groupBox4.Location = new System.Drawing.Point(528, 306);
+		    this.groupBox4.Name = "groupBox4";
+		    this.groupBox4.Size = new System.Drawing.Size(169, 77);
+		    this.groupBox4.TabIndex = 19;
+		    this.groupBox4.TabStop = false;
+		    this.groupBox4.Text = "MCPU Control";
+		    // 
+		    // images
+		    // 
+		    this.images.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("images.ImageStream")));
+		    this.images.TransparentColor = System.Drawing.Color.Transparent;
+		    this.images.Images.SetKeyName(0, "green_circle.png");
+		    this.images.Images.SetKeyName(1, "red_circle.png");
+		    // 
+		    // groupBox5
+		    // 
+		    this.groupBox5.Controls.Add(this.btn_runcnc);
+		    this.groupBox5.Controls.Add(this.btn_stopcnc);
+		    this.groupBox5.Location = new System.Drawing.Point(529, 389);
+		    this.groupBox5.Name = "groupBox5";
+		    this.groupBox5.Size = new System.Drawing.Size(169, 77);
+		    this.groupBox5.TabIndex = 20;
+		    this.groupBox5.TabStop = false;
+		    this.groupBox5.Text = "CNC Control";
+		    // 
+		    // btn_runcnc
+		    // 
+		    this.btn_runcnc.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(0)))));
+		    this.btn_runcnc.Location = new System.Drawing.Point(31, 19);
+		    this.btn_runcnc.Name = "btn_runcnc";
+		    this.btn_runcnc.Size = new System.Drawing.Size(49, 48);
+		    this.btn_runcnc.TabIndex = 16;
+		    this.btn_runcnc.Text = "RUN CNC";
+		    this.btn_runcnc.UseVisualStyleBackColor = false;
+		    this.btn_runcnc.Click += new System.EventHandler(this.Btn_runcncClick);
+		    // 
+		    // btn_stopcnc
+		    // 
+		    this.btn_stopcnc.BackColor = System.Drawing.Color.Red;
+		    this.btn_stopcnc.Location = new System.Drawing.Point(93, 19);
+		    this.btn_stopcnc.Name = "btn_stopcnc";
+		    this.btn_stopcnc.Size = new System.Drawing.Size(49, 48);
+		    this.btn_stopcnc.TabIndex = 17;
+		    this.btn_stopcnc.Text = "STOP CNC";
+		    this.btn_stopcnc.UseVisualStyleBackColor = false;
+		    this.btn_stopcnc.Click += new System.EventHandler(this.Btn_stopcncClick);
+		    // 
 		    // MainForm
 		    // 
 		    this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 		    this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 		    this.ClientSize = new System.Drawing.Size(710, 649);
+		    this.Controls.Add(this.groupBox5);
+		    this.Controls.Add(this.groupBox4);
+		    this.Controls.Add(this.groupBox2);
 		    this.Controls.Add(this._status);
-		    this.Controls.Add(this.bt_run);
-		    this.Controls.Add(this.bt_stop);
 		    this.Controls.Add(this.logWindow);
 		    this.Controls.Add(this.bt_split);
 		    this.Controls.Add(this.groupBox3);
@@ -316,6 +386,9 @@ namespace GCode_splitter
 		    this.groupBox3.ResumeLayout(false);
 		    this._status.ResumeLayout(false);
 		    this._status.PerformLayout();
+		    this.groupBox2.ResumeLayout(false);
+		    this.groupBox4.ResumeLayout(false);
+		    this.groupBox5.ResumeLayout(false);
 		    this.ResumeLayout(false);
 		    this.PerformLayout();
 

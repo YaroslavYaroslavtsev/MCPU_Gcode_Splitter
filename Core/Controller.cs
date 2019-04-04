@@ -69,16 +69,25 @@ namespace GCode_splitter.Core
                 if (_reciever != null) {
                     if (_item.Name == _reciever)
                         _item.command(_command, arg);
-                } else {
-                    _item.command(_command, arg);
-                }
+                } 
             }
 		
         }
 		
         public object getState(string subsystem, string item)
         {
-            return new object();
+            object _result = new object();
+            
+            foreach (SubSystem _item in _subs) {
+                if (subsystem != null) {
+                    if (_item.Name == subsystem) {
+                        _result = _item.getState(item);
+                        break;
+                    }
+                } 
+            }
+        
+            return _result;
         }
 		
 		

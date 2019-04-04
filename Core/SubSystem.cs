@@ -33,6 +33,10 @@ namespace GCode_splitter.Core
 		
 		abstract public void command(string command, params object[] arg);
 		
+		virtual public object getState(string item)
+		{
+		    return new object();
+		}
 		// event
 		public delegate void stateDelegate(string subsystem, string item, object state);
 		

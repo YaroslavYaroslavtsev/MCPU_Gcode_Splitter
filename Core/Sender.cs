@@ -27,8 +27,8 @@ namespace GCode_splitter.Core
             _ftp = new FtpConnection(_cfg.read("ftpIP"), _cfg.read("ftpUser"), _cfg.read("ftpPass"));
             _plc = new MxComp();
             _plc.onResult += onPlcResponse;
-            _mcpupath = _cfg.read("plcFtpPath") ;
-            _useCpu2 = _cfg.read("plcFtpCpu2") == "true" || _cfg.read("plcFtpCpu2") == "1";
+            _mcpupath = _cfg.read("plcFtpPath", "\\") ;
+            _useCpu2 = _cfg.read("plcFtpCpu2", "0") == "true" || _cfg.read("plcFtpCpu2", "0") == "1";
              _log = LogManager.GetLogger(name);
              _machine = new StateMachine();
         }
@@ -38,6 +38,7 @@ namespace GCode_splitter.Core
         Config _cfg;
         ILog _log;
         StateMachine _machine;
+        bool _edge = false;
         
         enum MachineState{
             STOP = 0,
@@ -50,6 +51,19 @@ namespace GCode_splitter.Core
         bool _useCpu2;
         int _fileSetToSend;
         int _fileSetTotal;
+        
+        public override object getState(string item)
+        {
+            switch (item)
+            {
+                case "state":
+                    if (_state != MachineState.STOP) return "run";
+                    else return "stop";
+                default:
+                    return null;
+            }
+        }
+        
         
         public override void command(string command, params object[] arg)
         {
@@ -79,6 +93,28 @@ namespace GCode_splitter.Core
                         _emitLogger("MCPU switched to STOP");
                     }
                     break;
+                    case "runcnc":
+                    {
+                        _emitLogger("Start CNC");
+                        _plc.Open();
+                        _plc.StartCNCprogram(1);
+                        System.Threading.Thread.Sleep(500);
+                        _plc.StartCNCprogram(0);
+                        _plc.Close();
+                        _emitLogger("CNC is started");
+                    }
+                    break;
+                  case "stopcnc":
+                    {
+                        _emitLogger("Stop CNC");
+                        _plc.Open();
+                        _plc.StopCNCprogram(1);
+                        System.Threading.Thread.Sleep(500);
+                        _plc.StopCNCprogram(0);
+                        _plc.Close();
+                        _emitLogger("CNC is stoped");
+                    }
+                    break;
 					case "run":
                     {
                         int _fileset = int.Parse(arg[0].ToString());
@@ -88,7 +124,12 @@ namespace GCode_splitter.Core
                         _emitLogger("Automatic file sending is enabled");
                         _emitLogger("Send fileset {0:000} from {1:000}", _fileSetToSend, _fileSetTotal);
                         _fileSend(_fileSetToSend++);
-                        _plc.continueProgramExecuting();
+                        _plc.Open();
+                        _plc.StartCNCprogram(1);
+                        System.Threading.Thread.Sleep(500);
+                        _plc.StartCNCprogram(0);
+                        _emitLogger("CNC program is started");
+                        _plc.Close();
                         _state = MachineState.WAIT;
                         
                     }
@@ -97,6 +138,7 @@ namespace GCode_splitter.Core
                     {
                         _emitLogger("Automatic file sending is disabled");
                         _state = MachineState.STOP;
+                        
                     }
                     break;
                     case "check":
@@ -107,21 +149,34 @@ namespace GCode_splitter.Core
                                 // do nothing
                                 break;
                             case MachineState.SEND:
-                                    _emitLogger("Send fileset {0:000} from {1:000}", _fileSetToSend, _fileSetTotal);
+                                     _emitLogger("Send fileset {0:000} from {1:000}", _fileSetToSend, _fileSetTotal);
                                     _fileSend(_fileSetToSend++);
-                                    _plc.continueProgramExecuting();
+                                     _plc.Open();
+                                     _plc.StartCNCprogram(1);
+                                      System.Threading.Thread.Sleep(500);
+                                     _plc.StartCNCprogram(0);
+                                     _plc.Close();
                                     _state = MachineState.WAIT;
                                 break;
                             case MachineState.WAIT:
-                                if (_plc.isProgFinished() && _fileSetToSend <= _fileSetTotal)
+                                if (_fileSetToSend >= _fileSetTotal+1)
                                 {
-                                    _state = MachineState.SEND;
-                                } else{
                                     _emitLogger("All filesets are sended");
                                     _state = MachineState.STOP;
+                                } else{
+                                     _plc.Open();
+                                     if (_plc.isProgFinished() && !_edge) {
+                                         _state = MachineState.SEND;
+                                         _edge = true;
+                                     }
+                                     if (!_plc.isProgFinished()) 
+                                         _edge = false;
+                                     //    _plc.resetProgramFinishFlag();
+                                     _plc.Close();
                                 }
                                 break;
                                 
+                       
                         }
                         
                         _emitStateChange("state", _state != MachineState.STOP );
@@ -149,6 +204,8 @@ namespace GCode_splitter.Core
         
         void _fileSend(int fileset)
         {
+            try {
+            
             _emitLogger("Switch to stop MCPU");
             _plc.Open();
             _plc.StopPlc();
@@ -160,23 +217,30 @@ namespace GCode_splitter.Core
             _emitLogger("Switch to run MCPU");
             _plc.RunPlc();
             _plc.Close();
+            }
+            catch (Exception ex) {
+                throw new Exception("FTP: " + ex.Message);
+            }
         }
         
         void deleteFiles()
         {
             _ftp.Open();
             _ftp.Login();
+            System.Threading.Thread.Sleep(1000);
             if (_useCpu2) _ftp.SendCommand("cpuchg no2");
-            try {
+           
             // remove 5 files O001.gcd to O005.gcd
-            for (int i = 1; i < 5; i++) {
+            for (int i = 1; i <= 5; i++) {
                 string _filename = _cfg.read("plcFtpPath") + "O" + i.ToString("000") + ".gcd";
                 _log.Debug("File deleted from mcpu " + _filename);
-                _ftp.RemoveFile(_filename);
+                 try {
+                     _ftp.RemoveFile(_filename);
+                 } catch (Exception ex) {
+                    
+                }
             }
-            } catch (Exception ex) {
-            
-            }
+           
             _ftp.Close();
             //MessageBox.Show("Send file - OK");
         }
@@ -185,6 +249,7 @@ namespace GCode_splitter.Core
         {
             _ftp.Open();
             _ftp.Login();
+            System.Threading.Thread.Sleep(1000);
             if (_useCpu2) _ftp.SendCommand("cpuchg no2");
             // write 4 files O001.gcd to O005.gcd
             for (int i = 1; i <= 5; i++) {

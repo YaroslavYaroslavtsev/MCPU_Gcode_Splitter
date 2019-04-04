@@ -35,17 +35,19 @@ namespace GCode_splitter
 			//
 			
 			InitializeComponent();
-
-			
+            			
 			_core.stateChange += updateState;
-			
+			config = Config.getEntity();
 			//debug
-			_file = "G:\\finial_cds-Ultimaker-2-and-2-PLA-normal.gcode";
-			filename.Text = "G:\\finial_cds-Ultimaker-2-and-2-PLA-normal.gcode";
+			_file = config.read("lastFileName");
+			filename.Text = _file ; //"G:\\finial_cds-Ultimaker-2-and-2-PLA-normal.gcode";
 			
 
 		}
         
+		Config config;
+		bool _flag;
+		
 		Controller _core = Controller.getEntity();
 		
 		// selected source file
@@ -87,11 +89,18 @@ namespace GCode_splitter
 				case "SENDER":
 					switch (item) {
 						case "state":
-							int _state;
-							if (int.TryParse(state.ToString(), out _state)) {
-								icon.Image = _state > 0 ?
-								this.icon.Image = ((System.Drawing.Image)(resources.GetObject("icon.run"))) :
-								this.icon.Image = ((System.Drawing.Image)(resources.GetObject("icon.stop")));
+							bool _state;
+							if (bool.TryParse(state.ToString(), out _state)) {
+								icon.Image = _state  ?
+								    this.icon.Image = images.Images[0] :
+								    this.icon.Image = images.Images[1];
+								
+								//btn_runplc.Enabled = !_state;
+								//btn_stopplc.Enabled = !_state;
+								//btn_runcnc.Enabled = !_state;
+								//btn_stopcnc.Enabled = !_state;
+								bt_run.Enabled = !_state;
+								bt_stop.Enabled = _state;
 							}
 							break;
 						case "mode":
@@ -102,7 +111,7 @@ namespace GCode_splitter
 							
 						break;
 						case "file":
-                        int _file;
+                            int _file;
                             if (int.TryParse(state.ToString(), out _file)) {
                             l_fileset.SelectedIndex = _file - 1;
                             }    
@@ -113,6 +122,7 @@ namespace GCode_splitter
 				default:
 					break;
 			}
+			Application.DoEvents();
 		
 		}
 			
@@ -123,7 +133,7 @@ namespace GCode_splitter
 				if (DialogResult.OK == ofd.ShowDialog()) {
 					_file = ofd.FileNames[0];
 					filename.Text = _file;
-
+					config.write("lastFileName",_file);
 
 					logWindow.append(Messages.FILE_SELECTED, _file);
 				}
@@ -187,10 +197,6 @@ namespace GCode_splitter
 		
 		void Bt_sendClick(object sender, EventArgs e)
 		{
-			if (_core.getState("SENDER", "state").ToString() == "run") {
-				Dialogs.warning(Errors.SEND_NOT_AVAILABLE);
-				return;
-			}
 			if (l_fileset.SelectedItems.Count == 0) {
 				Dialogs.warning(Errors.FILE_SET_NOT_SELECTED);
 				return;
@@ -213,11 +219,9 @@ namespace GCode_splitter
 				l_files.Items.AddRange(files[l_fileset.SelectedIndex]);
 			}
 		}
-        void ToolStripSplitButton1ButtonClick(object sender, EventArgs e)
-        {
-          
-        }
-        void STOPMCPUToolStripMenuItemClick(object sender, EventArgs e)
+		
+        
+        void Btn_stopClick(object sender, EventArgs e)
         {
           if (_core.getState("SENDER", "state").ToString() == "run") {
                 Dialogs.warning(Errors.OPERATION_NOT_AVAILABLE);
@@ -231,7 +235,8 @@ namespace GCode_splitter
                 Dialogs.error(ex.Message);
             }
         }
-        void RUNMCPUToolStripMenuItemClick(object sender, EventArgs e)
+        
+        void Btn_runClick(object sender, EventArgs e)
         {
           if (_core.getState("SENDER", "state").ToString() == "run") {
                 Dialogs.warning(Errors.OPERATION_NOT_AVAILABLE);
@@ -245,15 +250,52 @@ namespace GCode_splitter
                 Dialogs.error(ex.Message);
             }
         }
-        void _statusItemClicked(object sender, ToolStripItemClickedEventArgs e)
-        {
-          
-        }
+        
+        
         void _timerTick(object sender, EventArgs e)
         {
-             _core.command("SENDER:check");
+            if (!_flag) { 
+                _flag = true;
+                try {
+                _core.command("SENDER:check");
+                } catch (Exception ex) {
+                Dialogs.error(ex.Message);
+                }
+                
+                _flag = false;
+            }
+        }
+        
+        void Btn_runcncClick(object sender, EventArgs e)
+        {
+          if (_core.getState("SENDER", "state").ToString() == "run") {
+                Dialogs.warning(Errors.OPERATION_NOT_AVAILABLE);
+                return;
+            }
+            try {
+                if (Dialogs.confirmation(Messages.CONFIRM_OPERATION, "RUN CNC")) {
+                    _core.command("SENDER:runcnc");
+                }
+            } catch (Exception ex) {
+                Dialogs.error(ex.Message);
+            }
+        }
+        
+        void Btn_stopcncClick(object sender, EventArgs e)
+        {
+           if (_core.getState("SENDER", "state").ToString() == "run") {
+                Dialogs.warning(Errors.OPERATION_NOT_AVAILABLE);
+                return;
+            }
+            try {
+                if (Dialogs.confirmation(Messages.CONFIRM_OPERATION, "STOP CNC")) {
+                    _core.command("SENDER:stopcnc");
+                }
+            } catch (Exception ex) {
+                Dialogs.error(ex.Message);
+            }
         }
        
-
+        
 	}
 }

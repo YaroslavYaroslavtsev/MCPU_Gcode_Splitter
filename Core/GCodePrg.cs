@@ -24,16 +24,16 @@ namespace GCode_splitter
 		
 		public static string Create(string comment, string body)
 		{
-				// sub program
+		        // sub program
 				_prg.Clear();
 				_prg.Add("%");
 				_prg.Add(String.Format("({0})", comment));
-				_prg.Add(body);
+				_prg.Add(body.Trim(new []{'\r','\n'}));
 				_prg.Add("M99");
 				_prg.Add("%");
 			
 			
-			return String.Join("\n", _prg.ToArray());
+			return String.Join("\r\n", _prg.ToArray());
 		}
 		
 	
@@ -49,7 +49,7 @@ namespace GCode_splitter
 				_prg.Add("%");
 			
 			
-			return String.Join("\n", _prg.ToArray());
+			return String.Join("\r\n", _prg.ToArray());
 		}
 		
 		
