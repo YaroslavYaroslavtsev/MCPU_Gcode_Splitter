@@ -22,7 +22,8 @@ namespace GCode_splitter
 		public const string CONFIRM_OPERATION = "Confirm {0} operation";
 		public const string SPLIT_SELECTED_FILE = "Split {0} file?";
 		public const string SEND_FILE_SET = "Send {0} file set?";
-	
+		public const string SEND_FILE = "Send {0} file to MCPU?";
+        public const string WAIT_FILE_SENDING = "Turn on file part complete waiting?";
 		public const string FILE_SPLIT_STARTED = "File {0} splitting is started.";
 		public const string FILE_SPLIT_COMPLETED = "File {0} splitting is complete";
 	}

@@ -16,7 +16,6 @@ namespace GCode_splitter
 	/// </summary>
 	static public class Dialogs
 	{
-		
 		static DialogResult generic(string caption, string text, MessageBoxButtons buttons, MessageBoxIcon icon)
 		{
 			return MessageBox.Show(text, caption, buttons, icon);

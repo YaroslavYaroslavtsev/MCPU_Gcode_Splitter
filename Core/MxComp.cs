@@ -32,7 +32,7 @@ namespace GCode_splitter
 		public event onResultDelegate onResult;
 		
 		
-		public void Open()
+		public void Open(int station = 0)
         {
             int iReturnCode;				//Return code
             
@@ -42,7 +42,7 @@ namespace GCode_splitter
             try
             {
                    //Set the value of 'LogicalStationNumber' to the property.
-                    axActUtlType1.ActLogicalStationNumber = StationNumber;
+                    axActUtlType1.ActLogicalStationNumber = station;
 
                    
                     //Set the value of 'Password'.
@@ -71,7 +71,7 @@ namespace GCode_splitter
        		_raiseOnResult(ResultCode);
        }
 		
-		public void Close()
+		public void Close(int station = 0)
 		{
 			 int iReturnCode;				//Return code
             
@@ -80,7 +80,9 @@ namespace GCode_splitter
             //
             try
             {
-                   //The Open method is executed.
+                    axActUtlType1.ActLogicalStationNumber = station;
+   
+                    //The Open method is executed.
                     iReturnCode = axActUtlType1.Close();
                     
                     //When the Open method is succeeded, disable the TextBox of 'LogocalStationNumber'.

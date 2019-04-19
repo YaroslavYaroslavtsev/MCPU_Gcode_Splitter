@@ -8,14 +8,7 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Runtime.CompilerServices;
 using System.Windows.Forms;
-using System.Net;
-using FtpLib;
-using System.IO;
-using System.Text;
-
 
 using GCode_splitter.Core;
 
@@ -41,7 +34,7 @@ namespace GCode_splitter
 			//debug
 			_file = config.read("lastFileName");
 			filename.Text = _file ; //"G:\\finial_cds-Ultimaker-2-and-2-PLA-normal.gcode";
-			
+			tb_size.Text = config.readInt("cmnProgSize").ToString();
 
 		}
         
@@ -55,11 +48,12 @@ namespace GCode_splitter
 		
 		void updateState(string subsystem, string item, object state)
 		{
-			// common handler
+			// common handlers
 			if (item == "log") {
 				logWindow.append("[" + subsystem + "]" + state.ToString());
 				Application.DoEvents();
 			}
+			
 			if (item == "progress") {		
 				int _state;
 				if (int.TryParse(state.ToString(), out _state)) {
@@ -67,21 +61,19 @@ namespace GCode_splitter
 					progress.Value = _state;
 				}
 				Application.DoEvents();
-														
 			}
 			
 			switch (subsystem) {
 				case "SPLITTER":
 					switch (item) {
-						case "fileset":
-							var files = state as List<string[]>;
+						case "fileparts":
+							var files = state as List<string>;
 							if (files != null) {
-							    l_fileset.Items.Clear();
-							    for (int i = 0; i < files.Count; i++) {
-									l_fileset.Items.Add(String.Format("{0:000}", i + 1));
-									l_fileset.Tag = files;
+							    l_filepart.Items.Clear();
+							    for (int i = 1; i <= files.Count; i++) {
+									l_filepart.Items.Add(String.Format("{0:000}", i));
 								}
-								l_fileset.SelectedIndex = 0;
+								l_filepart.SelectedIndex = 0;
 							}
 							break;
 					}
@@ -99,8 +91,8 @@ namespace GCode_splitter
 								//btn_stopplc.Enabled = !_state;
 								//btn_runcnc.Enabled = !_state;
 								//btn_stopcnc.Enabled = !_state;
-								bt_run.Enabled = !_state;
-								bt_stop.Enabled = _state;
+								//bt_run.Enabled = !_state;
+								//bt_stop.Enabled = _state;
 							}
 							break;
 						case "mode":
@@ -113,7 +105,7 @@ namespace GCode_splitter
 						case "file":
                             int _file;
                             if (int.TryParse(state.ToString(), out _file)) {
-                            l_fileset.SelectedIndex = _file - 1;
+                                l_filepart.SelectedIndex = _file - 1;
                             }    
                             
                         break;
@@ -128,7 +120,7 @@ namespace GCode_splitter
 			
 		void ButtonSelect(object sender, EventArgs e)
 		{
-			using (OpenFileDialog ofd = new OpenFileDialog()) {
+			using (var ofd = new OpenFileDialog()) {
 				ofd.Multiselect = false;
 				if (DialogResult.OK == ofd.ShowDialog()) {
 					_file = ofd.FileNames[0];
@@ -146,13 +138,13 @@ namespace GCode_splitter
 				Dialogs.warning(Errors.FILE_SENDING_ALREADY_RAN);
 				return;
 			}
-			if (l_fileset.SelectedItems.Count == 0) {
+			if (l_filepart.SelectedItems.Count == 0) {
 				Dialogs.warning(Errors.FILE_SET_NOT_SELECTED);
 				return;
 			}
 			try {
 				if (Dialogs.confirmation(Messages.LAUNCH_FILE_SENDING)) {
-					_core.command("SENDER:run", l_fileset.SelectedIndex + 1, l_fileset.Items.Count );
+					_core.command("SENDER:run", l_filepart.SelectedIndex + 1, l_filepart.Items.Count );
 
 				}
 			} catch (Exception ex) {
@@ -164,11 +156,6 @@ namespace GCode_splitter
 	
 		void Bt_stopClick(object sender, EventArgs e)
 		{
-			if (_core.getState("SENDER", "state").ToString() != "run") {
-				Dialogs.warning(Errors.FILE_SENDING_ALREADY_STOPED);
-				return;
-			}
-			
 			try {
 				if (Dialogs.confirmation(Messages.STOP_FILE_SENDING)) {
 					_core.command("SENDER:stop");
@@ -197,31 +184,20 @@ namespace GCode_splitter
 		
 		void Bt_sendClick(object sender, EventArgs e)
 		{
-			if (l_fileset.SelectedItems.Count == 0) {
+			if (l_filepart.SelectedItems.Count == 0) {
 				Dialogs.warning(Errors.FILE_SET_NOT_SELECTED);
 				return;
 			}
 			try {
-				if (Dialogs.confirmation(Messages.SEND_FILE_SET, l_fileset.SelectedItems[0])) {
-		            List<string[]> selectedSet = l_fileset.Tag as List<string[]>;
-		            _core.command("SENDER:send", l_fileset.SelectedIndex + 1, selectedSet[l_fileset.SelectedIndex].Length);
+				if (Dialogs.confirmation(Messages.SEND_FILE_SET, l_filepart.SelectedItems[0])) {
+		            _core.command("SENDER:send", l_filepart.SelectedIndex + 1, l_filepart.Items.Count);
 				}
 			} catch (Exception ex) {
 				Dialogs.error(ex.Message);
 			}
 		}
 
-		void L_filesetSelectedIndexChanged(object sender, EventArgs e)
-		{
-			var files = l_fileset.Tag as List<string[]>;
-			if (files != null) {
-				l_files.Items.Clear();
-				l_files.Items.AddRange(files[l_fileset.SelectedIndex]);
-			}
-		}
-		
-        
-        void Btn_stopClick(object sender, EventArgs e)
+		void Btn_stopClick(object sender, EventArgs e)
         {
           if (_core.getState("SENDER", "state").ToString() == "run") {
                 Dialogs.warning(Errors.OPERATION_NOT_AVAILABLE);
@@ -294,6 +270,47 @@ namespace GCode_splitter
             } catch (Exception ex) {
                 Dialogs.error(ex.Message);
             }
+        }
+        void Label1Click(object sender, EventArgs e)
+        {
+          
+        }
+        void Btn_waitClick(object sender, EventArgs e)
+        {
+            try {
+                if (Dialogs.confirmation(Messages.WAIT_FILE_SENDING)) {
+                    _core.command("SENDER:wait");
+                }
+            } catch (Exception ex) {
+                Dialogs.error(ex.Message);
+            }
+        }
+        void Bt_sendfileClick(object sender, EventArgs e)
+        {
+          if (filename.Text == "") {
+                Dialogs.warning(Errors.FILE_NOT_SELECTED);
+                return;
+            }
+            try {
+                if (Dialogs.confirmation(Messages.SEND_FILE, filename.Text)) {
+                    _core.command("SENDER:sendfile", filename.Text);
+                }
+            } catch (Exception ex) {
+                Dialogs.error(ex.Message);
+            }
+        }
+        void Label2Click(object sender, EventArgs e)
+        {
+          
+        }
+        void TextBox1TextChanged(object sender, EventArgs e)
+        {
+            int _newsize;
+            if (int.TryParse(tb_size.Text, out _newsize)) {
+                config.write("cmnProgSize",_newsize > 480000 ? "480000" : _newsize.ToString());
+            }
+            tb_size.Text = config.readInt("cmnProgSize").ToString();
+            
         }
        
         

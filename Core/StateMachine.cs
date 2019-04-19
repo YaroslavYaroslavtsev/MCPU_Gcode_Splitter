@@ -18,52 +18,58 @@ namespace GCode_splitter.Core
         public StateMachine()
         {
         }
-        
-        enum MachineState{
+
+        enum MachineState
+        {
             STOP = 0,
             SEND = 1,
             WAIT = 2
         }
-        
-        int FileNumber{get;set;}
-        
-        MxComp mx {get;set;}
-        
-        
+
+        int FileNumber { get; set; }
+
+        MxComp mx { get; set; }
+
+
         MachineState _state = MachineState.STOP;
-        
-        
-        public void run(int fileNumber){
+
+
+        public void run(int fileNumber)
+        {
             FileNumber = fileNumber;
             _state = MachineState.SEND;
         }
-        
-        public void stop(){
-        
+
+        public void stop()
+        {
+
         }
-        
-        public void check(){
-            switch(_state)
+
+        public void check()
+        {
+            switch (_state)
             {
-            case MachineState.STOP:
-                //do nothing
-                break;
-            
-            case MachineState.WAIT:
-                if (mx.isProgFinished()) {
-                
-                }
-                break;
+                case MachineState.STOP:
+                    //do nothing
+                    break;
+
+                case MachineState.WAIT:
+                    if (mx.isProgFinished())
+                    {
+
+                    }
+                    break;
             }
         }
-        
+
         public delegate void ActionDelegate();
-        
+
         public event ActionDelegate DoAction;
-        
-        void raiseAction(){
+
+        void raiseAction()
+        {
             if (DoAction != null) DoAction();
         }
-        
+
     }
 }

@@ -29,7 +29,7 @@ namespace GCode_splitter
 				_prg.Add("%");
 				_prg.Add(String.Format("({0})", comment));
 				_prg.Add(body.Trim(new []{'\r','\n'}));
-				_prg.Add("M99");
+				_prg.Add("M02");
 				_prg.Add("%");
 			
 			
